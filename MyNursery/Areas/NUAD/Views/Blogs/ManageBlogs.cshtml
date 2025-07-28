@@ -1,5 +1,6 @@
-﻿@model IEnumerable<MyNursery.Areas.NUAD.Models.BlogPost>
-@using System.Linq
+﻿@model IEnumerable<MyNursery.Models.BlogPost>
+@using MyNursery.Utility;
+@using MyNursery.Areas.NUSAD.Models;
 
 @{
     ViewData["Title"] = "Manage Blogs";
@@ -11,14 +12,14 @@
         <div class="row align-items-center">
             <div class="col-md-12">
                 <div class="page-header-title">
-                    <h5 class="m-b-10">Manage Blogs</h5>
+                    <h5 class="m-b-10">Published Blog Posts</h5>
                 </div>
                 <ul class="breadcrumb">
                     <li class="breadcrumb-item">
                         <a asp-area="NUAD" asp-controller="Home" asp-action="Dashboard"><i class="feather icon-home"></i></a>
                     </li>
                     <li class="breadcrumb-item"><a href="#">Blogs</a></li>
-                    <li class="breadcrumb-item"><a href="#">Manage Blogs</a></li>
+                    <li class="breadcrumb-item"><a href="#">Published Blogs</a></li>
                 </ul>
             </div>
         </div>
@@ -30,8 +31,8 @@
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">All Blog Posts</h5>
-                <span class="text-muted">Search, filter, and manage blog entries.</span>
+                <h5 class="mb-0">Published Blog Posts</h5>
+                <span class="text-muted">Search, filter, and manage published blog entries.</span>
             </div>
             <div class="card-body">
 
@@ -42,72 +43,83 @@
                     <div class="col-md-4">
                         <select id="categoryFilter" class="form-control" onchange="filterTable()">
                             <option value="">-- Filter by Category --</option>
-                            <option value="Education">Education</option>
-                            <option value="Events">Events</option>
-                            <option value="Tips">Tips</option>
+                            @if (ViewBag.Categories != null)
+                            {
+                                foreach (var cat in (List<BlogCategory>)ViewBag.Categories)
+                                {
+                                    <option value="@cat.Name.ToLower()">@cat.Name</option>
+                                }
+                            }
                         </select>
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-hover" id="blogsTable">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>Title</th>
-                                <th>Category</th>
-                                <th>Publish Date</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var blog in Model)
-                            {
-                                <tr>
-                                    <td>@blog.Title</td>
-                                    <td>@blog.Category</td>
-                                    <td>@blog.PublishDate?.ToString("yyyy-MM-dd")</td>
-                                    <td>
-                                        <form asp-action="UpdateStatus" method="post" class="d-flex align-items-center">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="Id" value="@blog.Id" />
-                                            <select name="Status" class="form-control form-control-sm mr-2">
-                                                <option value="Published" selected="@(blog.Status == "Published")">Published</option>
-                                                <option value="Draft" selected="@(blog.Status == "Draft")">Draft</option>
-                                                <option value="Archived" selected="@(blog.Status == "Archived")">Archived</option>
-                                            </select>
-                                            <button type="submit" class="btn btn-sm btn-secondary">
-                                                <i class="feather icon-refresh-cw"></i> Update
-                                            </button>
-                                        </form>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-info btn-sm" onclick="viewBlog(@blog.Id)">
-                                            <i class="feather icon-eye"></i> View
-                                        </button>
-                                        <a asp-action="EditBlog" asp-route-id="@blog.Id" class="btn btn-warning btn-sm">
-                                            <i class="feather icon-edit"></i> Edit
-                                        </a>
-                                        <form asp-action="DeleteBlog"
-                                              asp-route-id="@blog.Id"
-                                              method="post"
-                                              class="delete-form d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-danger btn-sm">
-                                                <i class="feather icon-trash-2"></i> Delete
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-                @if (!Model?.Any() ?? true)
+                @if (!Model.Any())
                 {
-                    <div class="alert alert-info mt-4">
-                        No blog posts found.
+                    <div class="alert alert-info">No published posts found.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="blogsTable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Publish Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var blog in Model)
+                                {
+                                    <tr>
+                                        <td>@blog.Title</td>
+                                        <td>@blog.Category?.Name</td>
+                                        <td>@blog.PublishDate?.ToString("yyyy-MM-dd")</td>
+                                        <td>
+                                            <form asp-action="ChangeApprovalStatus" method="post" class="d-flex align-items-center">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@blog.Id" />
+                                                <select name="status" class="form-control form-control-sm me-2">
+                                                    <option value="@SD.Status_Approved" selected="@(blog.Status == SD.Status_Approved)">
+                                                        Accepted
+                                                    </option>
+                                                    <option value="@SD.Status_Disapproved" selected="@(blog.Status == SD.Status_Disapproved)">
+                                                        Rejected
+                                                    </option>
+                                                    <option value="Pending" selected="@(blog.Status != SD.Status_Approved && blog.Status != SD.Status_Disapproved)">
+                                                        Pending
+                                                    </option>
+                                                </select>
+                                                <button type="submit" class="btn btn-sm btn-secondary">
+                                                    <i class="feather icon-refresh-cw"></i> Update
+                                                </button>
+                                            </form>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-info btn-sm me-1" onclick="viewBlog(@blog.Id)">
+                                                <i class="feather icon-eye"></i> View
+                                            </button>
+                                            <button class="btn btn-primary btn-sm" onclick="previewBlog(@blog.Id)">
+                                                <i class="feather icon-file-text"></i> Preview
+                                            </button>
+
+                                            <form asp-action="DeleteBlog"
+                                                  asp-route-id="@blog.Id"
+                                                  method="post"
+                                                  class="delete-form d-inline ms-1">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                    <i class="feather icon-trash-2"></i> Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 }
             </div>
@@ -159,8 +171,102 @@
     </div>
 </div>
 
+<!-- Preview Blog Modal -->
+<div class="modal fade" id="blogPreviewModal" tabindex="-1" aria-labelledby="blogPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
+
+            <!-- Modal Header -->
+            <div class="modal-header bg-primary text-white py-3 px-4">
+                <h5 class="modal-title fw-semibold" id="blogPreviewModalLabel">📖 Blog Preview</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body bg-white px-5 py-4">
+
+                <!-- Blog Title -->
+                <h1 id="previewTitle" class="text-center text-dark fw-bold mb-4" style="font-size: 2rem;"></h1>
+
+                <!-- Cover Image -->
+                <div class="text-center mb-4">
+                    <img id="previewCoverImage" src="" alt="Cover Image" class="img-fluid rounded-4 shadow" style="max-height: 400px; object-fit: cover;">
+                </div>
+
+                <!-- Meta Info -->
+                <div class="text-secondary fs-6 mb-4 text-center">
+                    <div class="mb-2">
+                        <i class="fas fa-tag me-1"></i><strong>Category:</strong> <span id="previewCategory"></span>
+                    </div>
+                    <div>
+                        <i class="fas fa-calendar-alt me-1"></i><strong>Published:</strong> <span id="previewPublishDate"></span>
+                    </div>
+                </div>
+
+                <hr class="mb-4">
+
+                <!-- Blog Content -->
+                <div id="previewContent" class="mb-5" style="font-size: 1.125rem; line-height: 1.8;"></div>
+
+                <!-- Optional Images -->
+                <div id="previewImages" class="row g-4">
+                    <!-- Injected dynamically -->
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
+        function previewBlog(id) {
+            fetch(`/NUAD/Blogs/GetBlogDetails/${id}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch blog details.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById("previewTitle").textContent = data.title || 'Untitled';
+                    document.getElementById("previewCategory").textContent = data.category || 'Uncategorized';
+                    document.getElementById("previewPublishDate").textContent = data.publishDate || 'N/A';
+
+                    const contentHtml = (data.content || '').replace(/\n/g,'<br>');
+                    document.getElementById('previewContent').innerHTML = contentHtml;
+
+                    const coverImg = document.getElementById("previewCoverImage");
+                    if (data.coverImage) {
+                        coverImg.src = data.coverImage;
+                        coverImg.style.display = "block";
+                    } else {
+                        coverImg.style.display = "none";
+                    }
+
+                    const previewImages = document.getElementById("previewImages");
+                    previewImages.innerHTML = "";
+
+                    const optionalImages = [data.image1, data.image2];
+                    optionalImages.forEach(url => {
+                        if (url) {
+                            const col = document.createElement("div");
+                            col.className = "col-md-6 mb-3";
+                            col.innerHTML = `<img src="${url}" class="img-fluid rounded shadow-sm" alt="Blog Image" style="max-height: 300px; object-fit: cover;">`;
+                            previewImages.appendChild(col);
+                        }
+                    });
+
+                    $('#blogPreviewModal').modal('show');
+                })
+                .catch(error => {
+                    console.error("Error loading blog preview:", error);
+                    alert("Error loading blog preview.");
+                });
+        }
+
         function filterTable() {
             const input = document.getElementById("searchInput").value.toLowerCase();
             const categoryFilter = document.getElementById("categoryFilter").value.toLowerCase();
@@ -180,13 +286,14 @@
 
         function viewBlog(id) {
             fetch(`/NUAD/Blogs/GetBlogDetails/${id}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (!data) {
-                        alert("Blog details not found.");
-                        return;
+                .then(response => {
+                    if (!response.ok) {
+                        alert("Failed to load blog details.");
+                        throw new Error("Network response was not ok");
                     }
-
+                    return response.json();
+                })
+                .then(data => {
                     document.getElementById("blogTitle").textContent = data.title || '';
                     document.getElementById("blogCategory").textContent = data.category || '';
                     document.getElementById("blogStatus").textContent = data.status || '';
@@ -212,7 +319,10 @@
 
                     $('#blogViewModal').modal('show');
                 })
-                .catch(() => alert('Error loading blog details.'));
+                .catch(error => {
+                    console.error("Error fetching blog details:", error);
+                    alert("Error loading blog details.");
+                });
         }
 
         document.addEventListener('DOMContentLoaded', () => {

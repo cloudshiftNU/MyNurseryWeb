@@ -1,260 +1,225 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
-using MyNursery.Areas.NUAD.Data;
-using MyNursery.Areas.NUAD.Models;
-using MyNursery.Utility; // ✅ Added for SD class usage
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MyNursery.Areas.Welcome.Models;
+using MyNursery.Data;
+using MyNursery.Models;
+using MyNursery.Utility;
 using System;
 using System.IO;
-using System.Threading.Tasks;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
 
 namespace MyNursery.Areas.NUAD.Controllers
 {
     [Area("NUAD")]
+    [Authorize(Roles = SD.Role_Admin)]
     public class BlogsController : Controller
     {
         private readonly ApplicationDbContext _db;
         private readonly IWebHostEnvironment _env;
-        private const long MaxFileSize = 1 * 1024 * 1024;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public BlogsController(ApplicationDbContext db, IWebHostEnvironment env)
+        public BlogsController(ApplicationDbContext db, IWebHostEnvironment env, UserManager<ApplicationUser> userManager)
         {
             _db = db;
             _env = env;
+            _userManager = userManager;
         }
 
+        // GET: NUAD/Blogs/ManageBlogs
         [HttpGet]
-        public IActionResult CreateBlog()
+        public async Task<IActionResult> ManageBlogs()
         {
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateBlog(BlogPost blogPost, IFormFile? CoverImage, IFormFile? OptionalImage1, IFormFile? OptionalImage2)
-        {
-            if (!IsValidFileSize(CoverImage))
-                ModelState.AddModelError("CoverImage", "Cover image size cannot exceed 1 MB.");
-            if (!IsValidFileSize(OptionalImage1))
-                ModelState.AddModelError("OptionalImage1", "Optional image 1 size cannot exceed 1 MB.");
-            if (!IsValidFileSize(OptionalImage2))
-                ModelState.AddModelError("OptionalImage2", "Optional image 2 size cannot exceed 1 MB.");
-
-            if (!ModelState.IsValid)
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
             {
-                return View(blogPost);
+                TempData[SD.Error_Msg] = "User not authenticated.";
+                return RedirectToAction("Login", "Account", new { area = "" });
             }
 
-            blogPost.CreatedAt = DateTime.Now;
-            blogPost.Status = blogPost.PublishDate.HasValue && blogPost.PublishDate.Value.Date <= DateTime.Now.Date
-                ? SD.Status_Published
-                : SD.Status_Draft;
+            // If user is admin, show all blogs, otherwise show own blogs (optional)
+            var isAdmin = await _userManager.IsInRoleAsync(user, SD.Role_Admin);
 
-            string wwwRootPath = _env.WebRootPath;
-            string blogImagesPath = Path.Combine(wwwRootPath, "uploads", "blogs");
+            IQueryable<BlogPost> query = _db.BlogPosts
+                .Include(b => b.BlogImages)
+                .Include(b => b.Category)
+                .Where(b => !b.IsDeleted);
 
-            if (!Directory.Exists(blogImagesPath))
-                Directory.CreateDirectory(blogImagesPath);
-
-            if (CoverImage != null)
+            if (!isAdmin)
             {
-                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(CoverImage.FileName);
-                string fullPath = Path.Combine(blogImagesPath, fileName);
-                using var stream = new FileStream(fullPath, FileMode.Create);
-                await CoverImage.CopyToAsync(stream);
-                blogPost.CoverImagePath = "/uploads/blogs/" + fileName;
+                // For non-admins, filter by their own blogs (optional)
+                query = query.Where(b => b.CreatedByUserId == user.Id);
             }
 
-            if (OptionalImage1 != null)
-            {
-                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(OptionalImage1.FileName);
-                string fullPath = Path.Combine(blogImagesPath, fileName);
-                using var stream = new FileStream(fullPath, FileMode.Create);
-                await OptionalImage1.CopyToAsync(stream);
-                blogPost.OptionalImage1Path = "/uploads/blogs/" + fileName;
-            }
+            var blogs = await query
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync();
 
-            if (OptionalImage2 != null)
-            {
-                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(OptionalImage2.FileName);
-                string fullPath = Path.Combine(blogImagesPath, fileName);
-                using var stream = new FileStream(fullPath, FileMode.Create);
-                await OptionalImage2.CopyToAsync(stream);
-                blogPost.OptionalImage2Path = "/uploads/blogs/" + fileName;
-            }
+            ViewBag.Categories = await _db.BlogCategories.OrderBy(c => c.Name).ToListAsync();
 
-            _db.BlogPosts.Add(blogPost);
-            await _db.SaveChangesAsync();
-
-            TempData[SD.Success_Msg] = "Blog Created Successfully";
-            return RedirectToAction("ManageBlogs");
-        }
-
-        [HttpGet]
-        public IActionResult ManageBlogs()
-        {
-            var blogs = _db.BlogPosts.OrderByDescending(b => b.CreatedAt).ToList();
             return View(blogs);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateStatus(int Id, string Status)
+
+        // GET: NUAD/Blogs/PublishedBlogs
+        [HttpGet]
+        public async Task<IActionResult> PublishedBlogs()
         {
-            var blog = await _db.BlogPosts.FindAsync(Id);
-            if (blog == null)
-            {
-                TempData[SD.Error_Msg] = "Blog not found.";
-                return RedirectToAction("ManageBlogs");
-            }
+            var blogs = await _db.BlogPosts
+                .Include(b => b.BlogImages)
+                .Include(b => b.Category)
+                .Where(b => b.Status == SD.Status_Approved && !b.IsDeleted)
+                .OrderByDescending(b => b.PublishDate)
+                .ToListAsync();
 
-            if (Status == SD.Status_Published && blog.Status != SD.Status_Published)
-            {
-                blog.PublishDate = DateTime.Now;
-            }
+            ViewBag.Categories = await _db.BlogCategories.OrderBy(c => c.Name).ToListAsync();
 
-            blog.Status = Status;
-            await _db.SaveChangesAsync();
-
-            TempData[SD.Success_Msg] = "Status updated successfully.";
-            return RedirectToAction("ManageBlogs");
+            return View(blogs);
         }
 
+        // GET: NUAD/Blogs/DeletedBlogs
+        [HttpGet]
+        public async Task<IActionResult> DeletedBlogs()
+        {
+            var deletedBlogs = await _db.BlogPosts
+                .Include(b => b.BlogImages)
+                .Include(b => b.Category)
+                .Where(b => b.IsDeleted)
+                .OrderByDescending(b => b.DeletedAt)
+                .ToListAsync();
+
+            return View(deletedBlogs);
+        }
+
+        // POST: NUAD/Blogs/ChangeApprovalStatus
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeApprovalStatus(int id, string status)
+        {
+            var blog = await _db.BlogPosts.FindAsync(id);
+            if (blog == null || blog.IsDeleted)
+            {
+                TempData[SD.Error_Msg] = "Blog not found or already deleted.";
+                return RedirectToAction(nameof(ManageBlogs));
+            }
+
+            blog.Status = status;
+            blog.ModifiedDate = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            TempData[SD.Success_Msg] = "Blog status updated.";
+            return RedirectToAction(nameof(ManageBlogs));
+        }
+
+        // GET: NUAD/Blogs/GetBlogDetails/5
         [HttpGet]
         public async Task<IActionResult> GetBlogDetails(int id)
         {
-            var blog = await _db.BlogPosts.FindAsync(id);
+            var blog = await _db.BlogPosts
+                .Include(b => b.BlogImages)
+                .Include(b => b.Category)
+                .FirstOrDefaultAsync(b => b.Id == id && !b.IsDeleted);
+
             if (blog == null)
                 return NotFound();
 
+            var images = blog.BlogImages?.ToList();
+
             return Json(new
             {
-                title = blog.Title,
-                category = blog.Category,
-                content = blog.Content,
+                blog.Title,
+                blog.Content,
+                blog.Status,
+                category = blog.Category?.Name ?? "",
                 publishDate = blog.PublishDate?.ToString("yyyy-MM-dd"),
                 createdAt = blog.CreatedAt.ToString("yyyy-MM-dd"),
-                status = blog.Status,
-                coverImage = blog.CoverImagePath,
-                image1 = blog.OptionalImage1Path,
-                image2 = blog.OptionalImage2Path
+                coverImage = images?.FirstOrDefault(i => i.Type == "Cover")?.ImagePath,
+                image1 = images?.FirstOrDefault(i => i.Type == "Optional1")?.ImagePath,
+                image2 = images?.FirstOrDefault(i => i.Type == "Optional2")?.ImagePath
             });
         }
 
+        // POST: NUAD/Blogs/DeleteBlog (Soft Delete)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteBlog(int id)
         {
-            var blog = await _db.BlogPosts.FindAsync(id);
-            if (blog == null)
+            var blog = await _db.BlogPosts
+                .Include(b => b.BlogImages)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (blog == null || blog.IsDeleted)
             {
-                return Json(new { success = false, message = "Blog not found." });
+                return Json(new { success = false, message = "Blog not found or already deleted." });
             }
 
-            string wwwRootPath = _env.WebRootPath;
+            blog.IsDeleted = true;
+            blog.DeletedAt = DateTime.UtcNow;
+            blog.ModifiedDate = DateTime.UtcNow;
 
-            void DeleteFile(string? relativePath)
-            {
-                if (!string.IsNullOrEmpty(relativePath))
-                {
-                    string fullPath = Path.Combine(wwwRootPath, relativePath.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
-                    if (System.IO.File.Exists(fullPath))
-                        System.IO.File.Delete(fullPath);
-                }
-            }
-
-            DeleteFile(blog.CoverImagePath);
-            DeleteFile(blog.OptionalImage1Path);
-            DeleteFile(blog.OptionalImage2Path);
-
-            _db.BlogPosts.Remove(blog);
             await _db.SaveChangesAsync();
-
-            return Json(new { success = true, message = "Blog deleted successfully!" });
+            return Json(new { success = true, message = "Blog moved to deleted items." });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> EditBlog(int id)
-        {
-            var blog = await _db.BlogPosts.FindAsync(id);
-            if (blog == null)
-            {
-                return NotFound();
-            }
-
-            return View(blog);
-        }
-
+        // POST: NUAD/Blogs/RestoreBlog
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditBlog(BlogPost blogPost, IFormFile? CoverImage, IFormFile? OptionalImage1, IFormFile? OptionalImage2)
+        public async Task<IActionResult> RestoreBlog(int id)
         {
-            if (!IsValidFileSize(CoverImage))
-                ModelState.AddModelError("CoverImage", "Cover image size cannot exceed 1 MB.");
-            if (!IsValidFileSize(OptionalImage1))
-                ModelState.AddModelError("OptionalImage1", "Optional image 1 size cannot exceed 1 MB.");
-            if (!IsValidFileSize(OptionalImage2))
-                ModelState.AddModelError("OptionalImage2", "Optional image 2 size cannot exceed 1 MB.");
-
-            if (!ModelState.IsValid)
+            var blog = await _db.BlogPosts.FindAsync(id);
+            if (blog == null || !blog.IsDeleted)
             {
-                return View(blogPost);
+                return Json(new { success = false, message = "Blog not found or not deleted." });
             }
 
-            var existingBlog = await _db.BlogPosts.FindAsync(blogPost.Id);
-            if (existingBlog == null)
-            {
-                return NotFound();
-            }
-
-            string wwwRootPath = _env.WebRootPath;
-            string blogImagesPath = Path.Combine(wwwRootPath, "uploads", "blogs");
-            if (!Directory.Exists(blogImagesPath))
-            {
-                Directory.CreateDirectory(blogImagesPath);
-            }
-
-            string? ReplaceImage(IFormFile? file, string? existingPath)
-            {
-                if (file == null) return existingPath;
-
-                if (!string.IsNullOrEmpty(existingPath))
-                {
-                    string oldFullPath = Path.Combine(wwwRootPath, existingPath.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
-                    if (System.IO.File.Exists(oldFullPath))
-                        System.IO.File.Delete(oldFullPath);
-                }
-
-                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-                string fullPath = Path.Combine(blogImagesPath, fileName);
-                using var stream = new FileStream(fullPath, FileMode.Create);
-                file.CopyTo(stream);
-
-                return "/uploads/blogs/" + fileName;
-            }
-
-            existingBlog.Title = blogPost.Title;
-            existingBlog.Category = blogPost.Category;
-            existingBlog.Content = blogPost.Content;
-            existingBlog.PublishDate = blogPost.PublishDate;
-            existingBlog.Status = blogPost.PublishDate.HasValue && blogPost.PublishDate.Value.Date <= DateTime.Now.Date
-                ? SD.Status_Published
-                : SD.Status_Draft;
-
-            existingBlog.CoverImagePath = ReplaceImage(CoverImage, existingBlog.CoverImagePath);
-            existingBlog.OptionalImage1Path = ReplaceImage(OptionalImage1, existingBlog.OptionalImage1Path);
-            existingBlog.OptionalImage2Path = ReplaceImage(OptionalImage2, existingBlog.OptionalImage2Path);
+            blog.IsDeleted = false;
+            blog.DeletedAt = null;
+            blog.ModifiedDate = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
-
-            TempData[SD.Success_Msg] = "Blog updated successfully!";
-            return RedirectToAction("ManageBlogs");
+            return Json(new { success = true, message = "Blog restored successfully." });
         }
 
-        private bool IsValidFileSize(IFormFile? file)
+        // POST: NUAD/Blogs/PermanentlyDeleteBlog
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PermanentlyDeleteBlog(int id)
         {
-            return file == null || file.Length <= MaxFileSize;
+            var blog = await _db.BlogPosts
+                .Include(b => b.BlogImages)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (blog == null || !blog.IsDeleted)
+            {
+                return Json(new { success = false, message = "Blog not found or not deleted." });
+            }
+
+            // Delete associated image files
+            foreach (var img in blog.BlogImages ?? Enumerable.Empty<BlogImage>())
+            {
+                DeleteFile(img.ImagePath);
+            }
+
+            _db.BlogImages.RemoveRange(blog.BlogImages ?? Enumerable.Empty<BlogImage>());
+            _db.BlogPosts.Remove(blog);
+
+            await _db.SaveChangesAsync();
+            return Json(new { success = true, message = "Blog permanently deleted." });
+        }
+
+        private void DeleteFile(string? relativePath)
+        {
+            if (string.IsNullOrWhiteSpace(relativePath)) return;
+
+            var fullPath = Path.Combine(_env.WebRootPath, relativePath.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
+
+            if (System.IO.File.Exists(fullPath))
+            {
+                System.IO.File.Delete(fullPath);
+            }
         }
     }
 }
