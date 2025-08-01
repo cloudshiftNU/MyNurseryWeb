@@ -1,0 +1,239 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <title>@ViewBag.Title</title>
+
+	<!-- Meta -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="description" content="" />
+	<meta name="keywords" content="">
+	<meta name="author" content="Codedthemes" />
+
+    <!--rangana 3.4-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+
+    <!--custome css & fonts, colurs-->
+    <style>
+        :root {
+            /* Color Variables f39f5f */
+            --primary-color: #f39f5f;
+            --secondary-color: #70A6B1;
+            --accent-color: #385469;
+            --light-bg: #f9f4ef;
+            --text-color: #333;
+            --muted-text: #777;
+            /* Font Variable */
+            --main-font: 'Comic Sans MS', cursive;
+        }
+
+        /* Use variables globally */
+        body {
+            font-family: var(--main-font);
+            color: var(--text-color);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--main-font);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .bg-accent {
+            background-color: var(--accent-color);
+        }
+
+        .text-muted {
+            color: var(--muted-text) !important;
+        }
+
+        .stats-section {
+            background-color: var(--secondary-color);
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--primary-color);
+        }
+
+            .stats-section .col {
+                padding: 1rem;
+                border-right: 1px solid #fff;
+            }
+
+                .stats-section .col:last-child {
+                    border-right: none;
+                }
+
+            .stats-section h3 {
+                color: #fff;
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .stats-section p {
+                color: #fff;
+                font-size: 1rem;
+            }
+    </style>
+
+
+
+</head>
+
+<body>
+    <!-- Navbar -->
+    <div class="d-flex justify-content-center my-3">
+        <nav class="navbar navbar-expand-lg bg-white border shadow rounded"
+             style="width: 1209px; height: 50px;">
+            <div class="container-fluid p-0">
+                <a class="navbar-brand text-dark ms-3" href="#">&#9679; LittleSprouts Nursery</a>
+                <button class="navbar-toggler me-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item"><a class="nav-link text-dark" href="#">Curriculum</a></li>
+                        <li class="nav-item"><a class="nav-link text-dark" href="#">Admissions</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="ContactPage">Contact</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="AboutPage">About Us</a>
+                        </li>
+                    </ul>
+                    <a href="#" class="btn text-white me-3" style="background-color: #f39f5f;">Enroll Now</a>
+                </div>
+            </div>
+        </nav>
+    </div>
+         
+
+
+    <div>
+        @RenderBody()
+    </div>
+
+
+    <!-- Footer -->
+    <footer class="bg-info text-white py-4" style="background-color: #70A6B1;">
+        <div class="container">
+            <div class="row text-center text-md-start">
+                <!-- Contact Info -->
+                <div class="col-12 col-md-4 mb-3 mb-md-0">
+                    <div class="d-flex justify-content-center justify-content-md-start mb-2">
+                        <span class="me-2"><i class="bi bi-telephone-fill text-warning"></i></span>
+                        <div>
+                            <div class="fw-bold">Call Us Now</div>
+                            <div>+94 772563446</div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center justify-content-md-start mb-2">
+                        <span class="me-2"><i class="bi bi-envelope-fill text-warning"></i></span>
+                        <div>
+                            <div class="fw-bold">Make a Quote</div>
+                            <div>info@abcd.com</div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center justify-content-md-start">
+                        <span class="me-2"><i class="bi bi-geo-alt-fill text-warning"></i></span>
+                        <div>
+                            <div class="fw-bold">Location</div>
+                            <div>123 Negombo</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Quick Links -->
+                <div class="col-12 col-md-4 mb-3 mb-md-0">
+                    <h5 class="fw-bold mb-3">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none">Home</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Curriculum</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Admissions</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Contact</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">About Us</a></li>
+                    </ul>
+                </div>
+                <!-- Location Image -->
+                <div class="col-12 col-md-4">
+                    <div class="bg-secondary placeholder-wave" style="width: 200px; height: 150px; margin: 0 auto;"></div>
+                </div>
+            </div>
+            <hr class="bg-white">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <div class="d-flex justify-content-center mb-2">
+                        <a href="#" class="text-white me-3"><i class="bi bi-facebook fs-4"></i></a>
+                        <a href="#" class="text-white me-3"><i class="bi bi-twitter fs-4"></i></a>
+                        <a href="#" class="text-white me-3"><i class="bi bi-linkedin fs-4"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-youtube fs-4"></i></a>
+                    </div>
+                    <p class="small mb-0">&copy; Copyright 2025 by CloudShift</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+
+        $(document).ready(function() {
+            // $('#exampleModalCenter').modal();
+            // checkCookie();
+        });
+
+        function setCookie(cname, cvalue, exdays) {
+            var d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            var expires = "expires=" + d.toGMTString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        }
+
+        function getCookie(cname) {
+            var name = cname + "=";
+            var decodedCookie = decodeURIComponent(document.cookie);
+            var ca = decodedCookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        function checkCookie() {
+            var ticks = getCookie("modelopen");
+            if (ticks != "") {
+                ticks++;
+                setCookie("modelopen", ticks, 1);
+                if (ticks == "2" || ticks == "1" || ticks == "0") {
+                    $('#exampleModalCenter').modal();
+                }
+            } else {
+                // user = prompt("Please enter your name:", "");
+                $('#exampleModalCenter').modal();
+                ticks = 1;
+                setCookie("modelopen", ticks, 1);
+            }
+        }
+    </script>
+
+</body>
+
+
+</html>

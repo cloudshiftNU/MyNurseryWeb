@@ -12,6 +12,15 @@ namespace MyNursery.Areas.Welcome.Controllers
             return View(); // If you want to pass a model, you can use: return View(new ContactMessage());
         }
 
+        public IActionResult AboutPage()
+        {
+            return View();
+        }
+        public IActionResult ContactPage()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();
