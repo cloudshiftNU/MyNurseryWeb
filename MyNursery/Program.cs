@@ -15,9 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add MVC with Razor Pages, configure custom view locations for Areas and Content folder
 builder.Services.AddControllersWithViews()
+    .AddSessionStateTempDataProvider() // ✅ Add session-based TempData provider (optional)
     .AddRazorOptions(options =>
     {
-        // You can customize locations for views here if needed
         options.ViewLocationFormats.Add("/Views/{1}/{0}.cshtml");
         options.ViewLocationFormats.Add("/Views/Shared/{0}.cshtml");
     });
@@ -28,11 +28,28 @@ builder.Services.Configure<RazorViewEngineOptions>(options =>
 
     options.AreaViewLocationFormats.Add("/Areas/{2}/Views/{1}/{0}.cshtml");          // Default Area views
     options.AreaViewLocationFormats.Add("/Areas/{2}/Views/Content/{1}/{0}.cshtml");  // Custom Content folder inside Areas
+    options.AreaViewLocationFormats.Add("/Areas/{2}/Views/DynamicContent/{1}/{0}.cshtml");  // Custom DynamicContent folder inside Areas
     options.AreaViewLocationFormats.Add("/Areas/{2}/Views/Shared/{0}.cshtml");       // Shared views inside Areas
     options.AreaViewLocationFormats.Add("/Views/Shared/{0}.cshtml");                 // Global shared views
 });
 
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages()
+    .AddSessionStateTempDataProvider(); // ✅ Add session-based TempData provider (optional)
+
+// ✅ Add session state dependencies
+builder.Services.AddDistributedMemoryCache();
+
+builder.Services.AddMemoryCache();
+
+
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(15);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+
+
+});
 
 // Configure EF Core with SQL Server using connection string from appsettings.json
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -72,8 +89,9 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Identity/Account/Login";
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-    options.SlidingExpiration = true;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(15);
+    options.SlidingExpiration = false; // ❗Important: Do not extend on activity
+
     options.Cookie.IsEssential = true;
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
@@ -86,18 +104,20 @@ builder.Services.ConfigureApplicationCookie(options =>
             var principal = context.Principal;
             var roleClaim = principal?.FindFirst(ClaimTypes.Role)?.Value;
 
+            context.Properties.IsPersistent = false; 
+
             if (roleClaim == SD.Role_Admin)
                 context.Properties.RedirectUri = "/NUAD";
             else if (roleClaim == SD.Role_OtherUser)
-                context.Properties.RedirectUri = "/NUUS";   // Admin added users → NUUS 
+                context.Properties.RedirectUri = "/NUUS";
             else if (roleClaim == SD.Role_User)
-                context.Properties.RedirectUri = "/NUOUS";  // Registered users → NUOUS
+                context.Properties.RedirectUri = "/NUOUS";
             else if (roleClaim == SD.Role_SuperAdmin)
                 context.Properties.RedirectUri = "/NUSAD";
             else if (roleClaim == SD.Role_AdminCSAD)
                 context.Properties.RedirectUri = "/CSAD";
             else
-                context.Properties.RedirectUri = "/"; // fallback
+                context.Properties.RedirectUri = "/";
 
             return Task.CompletedTask;
         }
@@ -107,6 +127,10 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Configure EmailSettings from appsettings.json and register EmailSender service
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+
+// ✅ Add support for user context service using HttpContext and Session
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContextService, UserContextService>();
 
 var app = builder.Build();
 
@@ -121,6 +145,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// ✅ Enable session before Authentication/Authorization
+app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -153,7 +180,6 @@ await using (var scope = app.Services.CreateAsyncScope())
 }
 
 app.Run();
-
 
 // Seed roles method
 static async Task SeedRolesAsync(IServiceProvider services, ILogger logger)
@@ -215,8 +241,8 @@ static async Task SeedUsersAsync(IServiceProvider services, ILogger logger)
             LastName = u.LastName,
             EmailConfirmed = true,
             DateCreated = DateTime.UtcNow,
-            Area = u.Role == SD.Role_User ? "NUOUS" :   // Registered user area
-                   u.Role == SD.Role_OtherUser ? "NUUS" : // Admin added user area
+            Area = u.Role == SD.Role_User ? "NUOUS" :
+                   u.Role == SD.Role_OtherUser ? "NUUS" :
                    u.Role == SD.Role_Admin ? "NUAD" :
                    u.Role == SD.Role_SuperAdmin ? "NUSAD" :
                    u.Role == SD.Role_AdminCSAD ? "CSAD" : ""
