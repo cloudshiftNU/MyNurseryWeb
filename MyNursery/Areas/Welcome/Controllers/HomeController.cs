@@ -12,6 +12,24 @@ namespace MyNursery.Areas.Welcome.Controllers
             return View(); 
         }
 
+        public IActionResult AboutPage()
+        {
+            return View();
+        }
+        public IActionResult ContactPage()
+        {
+            return View();
+        }
+
+        public IActionResult BlogPage()
+        {
+            return View();
+        }
+        public IActionResult GalleryPage()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

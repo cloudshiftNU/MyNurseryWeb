@@ -1,0 +1,415 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <title>@ViewBag.Title</title>
+
+	<!-- Meta -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="description" content="" />
+	<meta name="keywords" content="">
+	<meta name="author" content="Codedthemes" />
+
+    <!--rangana 3.4-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+
+    <!--custome css & fonts, colours-->
+    <style>
+        :root {
+            /* Color Variables f39f5f */
+            --primary-color: #f39f5f;
+            --secondary-color: #70A6B1;
+            --accent-color: #385469;
+            --extra-light-bg: #EFF5F6;
+            --light-bg: #f9f4ef;
+            --text-color: #333;
+            --muted-text: #777;
+            
+            /* Font Variable */
+            --main-font: 'Comic Sans MS', cursive;
+        }
+
+        /* Use variables globally */
+
+        body {
+            font-family: var(--main-font);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            /* background: lightyellow; */
+        }
+
+        .main-content {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+            /* background: lightblue; */
+        }
+        .d-flex + div {
+            overflow: hidden;
+        }
+
+        .navbar {
+            top: 0;
+            margin-bottom: 0;
+        }
+
+            body > div + div {
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+            }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--main-font);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .bg-accent {
+            background-color: var(--accent-color);
+        }
+
+        .text-muted {
+            color: var(--muted-text) !important;
+        }
+
+        .stats-section {
+            background-color: var(--secondary-color);
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--primary-color);
+        }
+
+            .stats-section .col {
+                padding: 1rem;
+                border-right: 1px solid #fff;
+            }
+
+                .stats-section .col:last-child {
+                    border-right: none;
+                }
+
+            .stats-section h3 {
+                color: #fff;
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .stats-section p {
+                color: #fff;
+                font-size: 1rem;
+            }
+
+        /* blog page */
+        .card-img-top {
+            background-color: #ccc;
+            height: 200px;
+        }
+
+        .search-bar {
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .recent-posts {
+            background-color: var(--light-bg);
+            padding: 1rem;
+        }
+
+            .recent-posts a {
+                color: var(--text-color);
+                text-decoration: none;
+            }
+
+                .recent-posts a:hover {
+                    color: var(--primary-color);
+                }
+
+        .full-content {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .show-full-content .full-content {
+            display: block;
+        }
+
+
+        .wave-section {
+            position: relative;
+            background-color: #f1f7f8;
+            padding: 100px 20px 60px 20px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .wave-img {
+            position: absolute;
+            width: 100%;
+            left: 0;
+        }
+
+        .vector-23 {
+            bottom: 0;
+            z-index: 1;
+        }
+
+        .vector-22 {
+            bottom: 40px;
+            z-index: 2;
+        }
+
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+
+        .footer-waves {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            z-index: 1;
+        }
+
+            .footer-waves img.wave-img {
+                position: absolute;
+                width: 100%;
+                left: 0;
+            }
+
+            .footer-waves .vector-22 {
+                top: 0;
+                z-index: 1;
+            }
+
+            .footer-waves .vector-23 {
+                top: 20px;
+                z-index: 2;
+            }
+
+        footer {
+            position: relative;
+            overflow: visible;
+            min-height: 350px;
+        }
+
+            footer > .container {
+                position: relative;
+                z-index: 3;
+                padding-top: 80px;
+                padding-bottom: 40px;
+            }
+
+    </style>
+</head>
+
+<body style="margin: 0; padding: 0;">
+    <!-- Navbar -->
+
+    <nav class="navbar navbar-expand-lg bg-white border shadow rounded sticky-top" style="width: 100%; height: 60px; z-index: 999;">
+        <div class="container" style="max-width: 1200px;">
+            <a class="navbar-brand text-dark ms-3" href="#">&#9679; LittleSprouts Nursery</a>
+            <button class="navbar-toggler me-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="#">Curriculum</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="#">Admissions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-controller="Home" asp-action="ContactPage">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-controller="Home" asp-action="AboutPage">About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-controller="Home" asp-action="BlogPage">Blogs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-controller="Home" asp-action="GalleryPage">Gallery</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="d-none d-lg-block">
+                <a href="#" class="btn text-white me-3" style="background-color: #f39f5f;">Enroll Now</a>
+            </div>
+        </div>
+    </nav>
+
+    <div style="margin: 0; padding: 0;">
+        @RenderBody()
+    </div>
+
+    <!--Footer-->
+    <footer class="text-white pt-0" style="background-color: #70A6B1 !important; position: relative; overflow: hidden;">
+        <div class="footer-waves">
+            <img src="~/assets/images/Vector 22.png" alt="Wave 22" class="wave-img vector-22">
+            <img src="~/assets/images/Vector 23.png" alt="Wave 23" class="wave-img vector-23">
+        </div>
+        <div style="height: 60px;"></div>
+        <div class="container pt-5 mt-5">
+            <div class="row text-center text-md-start">
+                <!-- Contact Info -->
+                <div class="col-12 col-md-4 mb-3 mb-md-0">
+                    <div class="d-flex justify-content-center justify-content-md-start mb-2">
+                        <span class="me-2"><i class="bi bi-telephone-fill text-warning"></i></span>
+                        <div>
+                            <div class="fw-bold">Call Us Now</div>
+                            <div>+94 772563446</div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center justify-content-md-start mb-2">
+                        <span class="me-2"><i class="bi bi-envelope-fill text-warning"></i></span>
+                        <div>
+                            <div class="fw-bold">Make a Quote</div>
+                            <div>info@abcd.com</div>
+                            <div>support@abcd.com</div> 
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center justify-content-md-start">
+                        <span class="me-2"><i class="bi bi-geo-alt-fill text-warning"></i></span>
+                        <div>
+                            <div class="fw-bold">Location</div>
+                            <div>123 Negombo</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Quick Links -->
+                <div class="col-12 col-md-4 mb-3 mb-md-0">
+                    <h5 class="fw-bold mb-3">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li>
+                            <a  asp-controller="Home" asp-action="Index" class="text-white text-decoration-none">Home</a>
+                        </li>
+                        <li><a href="#" class="text-white text-decoration-none">Curriculum</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Admissions</a></li>
+                        <li>
+                            <a asp-controller="Home" asp-action="ContactPage" class="text-white text-decoration-none">Contact</a>
+                        </li>
+                        <li>
+                            <a asp-controller="Home" asp-action="AboutPage" class="text-white text-decoration-none">About Us</a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- Location Map -->
+                <div class="col-12 col-md-4">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126681.03523489199!2d79.78780305000001!3d7.208267999999996!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae2ed45b8981f8b%3A0x85fd733108cc2b60!2sNegombo!5e0!3m2!1sen!2slk!4v1691493495225!5m2!1sen!2slk"
+                            width="100%"
+                            height="150"
+                            style="border:0; border-radius: 10px;"
+                            allowfullscreen=""
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            </div>
+            <hr class="bg-white">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <div class="d-flex justify-content-center mb-2">
+                        <a href="https://facebook.com" class="text-white me-3"><i class="bi bi-facebook fs-4"></i></a>
+                        <a href="https://twitter.com" class="text-white me-3"><i class="bi bi-twitter fs-4"></i></a>
+                        <a href="https://linkedin.com" class="text-white me-3"><i class="bi bi-linkedin fs-4"></i></a>
+                        <a href="https://youtube.com" class="text-white"><i class="bi bi-youtube fs-4"></i></a>
+                    </div>
+                    <p class="small mb-0">&copy; Copyright 2025 by CloudShift</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+
+        //blog scripts
+
+           document.addEventListener("DOMContentLoaded", function () {
+               const buttons = document.querySelectorAll('.read-more-btn');
+
+               buttons.forEach(btn => {
+                   btn.addEventListener('click', function (e) {
+                       e.preventDefault();
+                       const content = this.previousElementSibling.querySelector('.full-content');
+
+                       if (this.dataset.expanded === "false") {
+                           content.style.display = 'inline';
+                           this.textContent = 'Read Less';
+                           this.dataset.expanded = "true";
+                       } else {
+                           content.style.display = 'none';
+                           this.textContent = 'Read More';
+                           this.dataset.expanded = "false";
+                       }
+                   });
+               });
+           });
+
+
+
+        $(document).ready(function() {
+            // $('#exampleModalCenter').modal();
+            // checkCookie();
+        });
+
+        function setCookie(cname, cvalue, exdays) {
+            var d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            var expires = "expires=" + d.toGMTString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        }
+
+        function getCookie(cname) {
+            var name = cname + "=";
+            var decodedCookie = decodeURIComponent(document.cookie);
+            var ca = decodedCookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        function checkCookie() {
+            var ticks = getCookie("modelopen");
+            if (ticks != "") {
+                ticks++;
+                setCookie("modelopen", ticks, 1);
+                if (ticks == "2" || ticks == "1" || ticks == "0") {
+                    $('#exampleModalCenter').modal();
+                }
+            } else {
+                // user = prompt("Please enter your name:", "");
+                $('#exampleModalCenter').modal();
+                ticks = 1;
+                setCookie("modelopen", ticks, 1);
+            }
+        }
+    </script>
+
+</body>
+
+
+</html>
